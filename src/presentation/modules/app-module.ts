@@ -5,12 +5,14 @@ import { SmtpEmailProvider } from '@infra/providers/smtp-email-provider';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { WebSocketModule } from '@presentation/modules/websocket-module';
+import { McpModule } from './mcp-module';
 import { UsersModule } from './users-module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     UsersModule,
+    McpModule,
     WebSocketModule,
   ],
   providers: [
