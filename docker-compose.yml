@@ -10,7 +10,7 @@ services:
     build:
       context: .
       target: development
-    container_name: api-nestjs
+    container_name: grana-flux-app
     ports:
       - '3000:3000'
     volumes:
@@ -40,7 +40,7 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    container_name: api-postgres
+    container_name: grana-flux-postgres
     ports:
       - '5432:5432'
     environment:
@@ -60,7 +60,7 @@ services:
 
   redis:
     image: redis:alpine
-    container_name: api-redis
+    container_name: grana-flux-redis
     ports:
       - '6379:6379'
     healthcheck:
@@ -73,7 +73,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: api-rabbitmq
+    container_name: grana-flux-rabbitmq
     ports:
       - '5672:5672'
       - '15672:15672'
@@ -88,7 +88,7 @@ services:
 
   smtp4dev:
     image: rnwood/smtp4dev:v3
-    container_name: api-smtp4dev
+    container_name: grana-flux-smtp4dev
     ports:
       - '8080:80' # Web UI
       - '2525:25' # SMTP
