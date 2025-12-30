@@ -1,0 +1,17 @@
+model User {
+  id         String   @id @default(uuid())
+  name       String   @db.VarChar(255)
+  email      String   @unique @db.VarChar(255)
+  password   String   @db.VarChar(255)
+  cpf        String   @unique @db.VarChar(11)
+  street     String   @db.VarChar(255)
+  number     String   @db.VarChar(255)
+  city       String   @db.VarChar(255)
+  state      String   @db.VarChar(255)
+  zipCode    String   @map("zip_code") @db.VarChar(8)
+  complement String?  @db.VarChar(255)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("users")
+}

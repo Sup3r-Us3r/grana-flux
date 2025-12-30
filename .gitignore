@@ -1,0 +1,5 @@
+node_modules
+coverage
+dist
+src/infrastructure/database/prisma/generated
+.env

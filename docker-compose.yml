@@ -1,0 +1,109 @@
+# =============================================================================
+# Docker Compose - Development Environment
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # APPLICATION
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      target: development
+    container_name: api-nestjs
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - RABBITMQ_URI=${RABBITMQ_URI}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_FROM=${SMTP_FROM}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      smtp4dev:
+        condition: service_started
+    networks:
+      - api-network
+
+  # ---------------------------------------------------------------------------
+  # INFRASTRUCTURE SERVICES
+  # ---------------------------------------------------------------------------
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: api-postgres
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-befinance}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - api-network
+
+  redis:
+    image: redis:alpine
+    container_name: api-redis
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - api-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: api-rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - api-network
+
+  smtp4dev:
+    image: rnwood/smtp4dev:v3
+    container_name: api-smtp4dev
+    ports:
+      - '8080:80' # Web UI
+      - '2525:25' # SMTP
+    networks:
+      - api-network
+
+# -----------------------------------------------------------------------------
+# NETWORKS
+# -----------------------------------------------------------------------------
+networks:
+  api-network:
+    driver: bridge
+
+# -----------------------------------------------------------------------------
+# VOLUMES
+# -----------------------------------------------------------------------------
+volumes:
+  postgres_data:
