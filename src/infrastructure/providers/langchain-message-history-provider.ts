@@ -6,7 +6,7 @@ import {
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class RedisMessageHistoryProvider implements MessageHistoryProvider {
+export class LangchainMessageHistoryProvider implements MessageHistoryProvider {
   private readonly TTL_SECONDS = 86400; // 24 hours
 
   constructor(private readonly cacheProvider: CacheProvider) {}
