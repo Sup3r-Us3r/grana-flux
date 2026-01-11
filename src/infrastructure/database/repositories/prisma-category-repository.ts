@@ -69,16 +69,4 @@ export class PrismaCategoryRepository implements CategoryRepository {
       where: { id },
     });
   }
-
-  async findOrCreate(name: string): Promise<Category> {
-    const normalizedName = name.trim();
-
-    const existing = await this.findByName(normalizedName);
-    if (existing) return existing;
-
-    const category = new Category({ name: normalizedName });
-    await this.create(category);
-
-    return category;
-  }
 }
