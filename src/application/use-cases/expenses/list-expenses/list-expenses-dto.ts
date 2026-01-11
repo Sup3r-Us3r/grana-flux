@@ -2,7 +2,7 @@ export interface ListExpensesInputDTO {
   userId: string;
   startDate?: string;
   endDate?: string;
-  category?: string;
+  categoryId?: string;
   minAmount?: number;
   maxAmount?: number;
 }

@@ -13,6 +13,15 @@ export interface ExpenseSummary {
   topExpenses: Expense[];
 }
 
+export interface ExpenseFilters {
+  userId: string;
+  categoryId?: string;
+  startDate?: Date;
+  endDate?: Date;
+  minAmount?: number;
+  maxAmount?: number;
+}
+
 export abstract class ExpenseRepository {
   abstract create(expense: Expense): Promise<void>;
   abstract findById(id: string): Promise<Expense | null>;
@@ -32,4 +41,5 @@ export abstract class ExpenseRepository {
     startDate?: Date,
     endDate?: Date,
   ): Promise<ExpenseSummary>;
+  abstract findWithFilters(filters: ExpenseFilters): Promise<Expense[]>;
 }

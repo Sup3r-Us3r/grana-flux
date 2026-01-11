@@ -113,7 +113,7 @@ export function createMcpTools(
   const listExpensesTool = new DynamicStructuredTool({
     name: 'list_expenses',
     description:
-      'List expenses with optional filters by period, category, or amount range. Use when user wants to see, list, or query their expenses.',
+      'List expenses with optional filters by period, category, or amount range. Use when user wants to see, list, or query their expenses. For category filter, use the categoryId from list_categories.',
     schema: z.object({
       startDate: z
         .string()
@@ -123,16 +123,21 @@ export function createMcpTools(
         .string()
         .optional()
         .describe('End date filter in ISO format (YYYY-MM-DD)'),
-      category: z.string().optional().describe('Filter by category name'),
+      categoryId: z
+        .string()
+        .optional()
+        .describe(
+          'Filter by category ID (UUID). Get this from list_categories.',
+        ),
       minAmount: z.number().optional().describe('Minimum amount filter'),
       maxAmount: z.number().optional().describe('Maximum amount filter'),
     }),
-    func: async ({ startDate, endDate, category, minAmount, maxAmount }) => {
+    func: async ({ startDate, endDate, categoryId, minAmount, maxAmount }) => {
       const result = await listExpensesUseCase.execute({
         userId,
         startDate,
         endDate,
-        category,
+        categoryId,
         minAmount,
         maxAmount,
       });

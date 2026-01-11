@@ -1,5 +1,6 @@
 import { Expense } from '@domain/expenses/entities/expense-entity';
 import {
+  ExpenseFilters,
   ExpenseRepository,
   ExpenseSummary,
 } from '@domain/expenses/repositories/expense-repository';
@@ -79,6 +80,48 @@ export class PrismaExpenseRepository implements ExpenseRepository {
     await this.prisma.expense.delete({
       where: { id },
     });
+  }
+
+  async findWithFilters(filters: ExpenseFilters): Promise<Expense[]> {
+    const where: {
+      userId: string;
+      categoryId?: string;
+      date?: { gte?: Date; lte?: Date };
+      amount?: { gte?: number; lte?: number };
+    } = {
+      userId: filters.userId,
+    };
+
+    if (filters.categoryId) {
+      where.categoryId = filters.categoryId;
+    }
+
+    if (filters.startDate || filters.endDate) {
+      where.date = {};
+      if (filters.startDate) {
+        where.date.gte = filters.startDate;
+      }
+      if (filters.endDate) {
+        where.date.lte = filters.endDate;
+      }
+    }
+
+    if (filters.minAmount !== undefined || filters.maxAmount !== undefined) {
+      where.amount = {};
+      if (filters.minAmount !== undefined) {
+        where.amount.gte = filters.minAmount;
+      }
+      if (filters.maxAmount !== undefined) {
+        where.amount.lte = filters.maxAmount;
+      }
+    }
+
+    const expenses = await this.prisma.expense.findMany({
+      where,
+      orderBy: { date: 'desc' },
+    });
+
+    return expenses.map((expense) => this.toDomain(expense));
   }
 
   async getSummaryByUserId(

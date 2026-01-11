@@ -1,6 +1,8 @@
-import { Expense } from '@domain/expenses/entities/expense-entity';
 import { CategoryRepository } from '@domain/expenses/repositories/category-repository';
-import { ExpenseRepository } from '@domain/expenses/repositories/expense-repository';
+import {
+  ExpenseFilters,
+  ExpenseRepository,
+} from '@domain/expenses/repositories/expense-repository';
 import { MoneyVO } from '@domain/expenses/value-objects/money-vo';
 import { Injectable } from '@nestjs/common';
 import {
@@ -17,39 +19,8 @@ export class ListExpensesUseCase {
   ) {}
 
   async execute(input: ListExpensesInputDTO): Promise<ListExpensesOutputDTO> {
-    let expenses: Expense[];
-
-    if (input.startDate && input.endDate) {
-      expenses = await this.expenseRepository.findByUserIdAndDateRange(
-        input.userId,
-        new Date(input.startDate),
-        new Date(input.endDate),
-      );
-    } else if (input.category) {
-      const category = await this.categoryRepository.findByName(input.category);
-      if (category) {
-        expenses = await this.expenseRepository.findByUserIdAndCategory(
-          input.userId,
-          category.id,
-        );
-      } else {
-        expenses = [];
-      }
-    } else {
-      expenses = await this.expenseRepository.findByUserId(input.userId);
-    }
-
-    // Apply amount filters
-    if (input.minAmount !== undefined || input.maxAmount !== undefined) {
-      expenses = expenses.filter((expense) => {
-        const amount = expense.amount.value;
-        if (input.minAmount !== undefined && amount < input.minAmount)
-          return false;
-        if (input.maxAmount !== undefined && amount > input.maxAmount)
-          return false;
-        return true;
-      });
-    }
+    const filters = this.buildFilters(input);
+    const expenses = await this.expenseRepository.findWithFilters(filters);
 
     const categories = await this.categoryRepository.findAll();
     const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
@@ -75,5 +46,33 @@ export class ListExpensesUseCase {
       totalAmount: Math.round(totalAmount * 100) / 100,
       totalAmountFormatted: new MoneyVO(totalAmount).formatted,
     };
+  }
+
+  private buildFilters(input: ListExpensesInputDTO): ExpenseFilters {
+    const filters: ExpenseFilters = {
+      userId: input.userId,
+    };
+
+    if (input.categoryId) {
+      filters.categoryId = input.categoryId;
+    }
+
+    if (input.startDate) {
+      filters.startDate = new Date(input.startDate);
+    }
+
+    if (input.endDate) {
+      filters.endDate = new Date(input.endDate);
+    }
+
+    if (input.minAmount !== undefined) {
+      filters.minAmount = input.minAmount;
+    }
+
+    if (input.maxAmount !== undefined) {
+      filters.maxAmount = input.maxAmount;
+    }
+
+    return filters;
   }
 }
