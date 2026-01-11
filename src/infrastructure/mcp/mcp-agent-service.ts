@@ -1,5 +1,7 @@
+import { CreateCategoryUseCase } from '@application/use-cases/expenses/create-category/create-category-use-case';
 import { CreateExpenseUseCase } from '@application/use-cases/expenses/create-expense/create-expense-use-case';
 import { GetExpenseSummaryUseCase } from '@application/use-cases/expenses/get-expense-summary/get-expense-summary-use-case';
+import { ListCategoriesUseCase } from '@application/use-cases/expenses/list-categories/list-categories-use-case';
 import { ListExpensesUseCase } from '@application/use-cases/expenses/list-expenses/list-expenses-use-case';
 import { MessageHistoryProvider } from '@domain/providers/message-history-provider';
 import {
@@ -28,15 +30,23 @@ Suas responsabilidades:
 - Responder de forma clara, concisa e amigável em português brasileiro
 - Nunca expor detalhes técnicos, IDs internos ou estrutura do sistema
 
+FLUXO OBRIGATÓRIO PARA REGISTRAR GASTOS:
+1. SEMPRE chame list_categories primeiro para ver as categorias disponíveis
+2. Analise as categorias retornadas e encontre a mais adequada para o gasto
+3. Se a categoria adequada existir, use o ID dela diretamente
+4. Se NÃO existir uma categoria adequada, chame create_category para criar uma nova
+5. Com o categoryId em mãos (obtido de list_categories ou create_category), chame create_expense
+6. NUNCA peça ao usuário o ID da categoria - resolva automaticamente usando as tools
+
 Quando o usuário mencionar gastos ou despesas:
 - Extraia descrição, valor, categoria e data da mensagem
 - Se a data não for especificada, use a data atual
 - Se a categoria não for clara, infira baseado na descrição
 - Valores podem estar em formato brasileiro (ex: "45,90" = 45.90)
 
-Categorias comuns:
+Categorias comuns (use como referência para inferir):
 - Alimentação: restaurantes, mercado, delivery, lanches
-- Transporte: combustível, uber, ônibus, estacionamento
+- Transporte: combustível, uber, ônibus, estacionamento, gasolina
 - Moradia: aluguel, condomínio, contas de água/luz/gás
 - Saúde: farmácia, consultas, exames, plano de saúde
 - Lazer: cinema, shows, jogos, viagens
@@ -60,6 +70,8 @@ export class McpAgentService implements OnModuleInit {
     private readonly createExpenseUseCase: CreateExpenseUseCase,
     private readonly listExpensesUseCase: ListExpensesUseCase,
     private readonly getExpenseSummaryUseCase: GetExpenseSummaryUseCase,
+    private readonly createCategoryUseCase: CreateCategoryUseCase,
+    private readonly listCategoriesUseCase: ListCategoriesUseCase,
     private readonly messageHistoryProvider: MessageHistoryProvider,
   ) {}
 
@@ -74,12 +86,12 @@ export class McpAgentService implements OnModuleInit {
     }
 
     this.model = new ChatGoogleGenerativeAI({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       apiKey,
       temperature: 0.3,
     });
 
-    this.logger.log('MCP Agent initialized with Gemini 2.5 Flash');
+    this.logger.log('MCP Agent initialized with Gemini 3 Flash');
   }
 
   async chat(
@@ -100,6 +112,8 @@ export class McpAgentService implements OnModuleInit {
       this.createExpenseUseCase,
       this.listExpensesUseCase,
       this.getExpenseSummaryUseCase,
+      this.createCategoryUseCase,
+      this.listCategoriesUseCase,
     );
 
     const modelWithTools = this.model.bindTools(tools);
@@ -122,58 +136,52 @@ export class McpAgentService implements OnModuleInit {
     let response = '';
 
     try {
-      // First call to get tool calls
-      const initialResponse = await modelWithTools.invoke(messages);
+      // Agentic loop: keep processing until no more tool calls
+      const currentMessages = [...messages];
+      let continueLoop = true;
 
-      console.log(
-        'Initial response:',
-        JSON.stringify(initialResponse, null, 2),
-      );
+      while (continueLoop) {
+        const aiResponse = await modelWithTools.invoke(currentMessages);
 
-      // Process tool calls if any
-      if (initialResponse.tool_calls && initialResponse.tool_calls.length > 0) {
-        const toolResponses: { toolCallId: string; content: string }[] = [];
+        if (aiResponse.tool_calls && aiResponse.tool_calls.length > 0) {
+          const toolResponses: { toolCallId: string; content: string }[] = [];
 
-        for (const toolCall of initialResponse.tool_calls) {
-          const tool = tools.find((t) => t.name === toolCall.name);
-          if (tool) {
-            this.logger.debug(
-              `Executing tool: ${toolCall.name} with args: ${JSON.stringify(toolCall.args)}`,
-            );
-            // Use any to bypass strict type checking for tool.invoke
-            const result = await (
-              tool as { invoke: (args: unknown) => Promise<string> }
-            ).invoke(toolCall.args);
-            const parsedResult = JSON.parse(result);
-            toolResults.push({ tool: toolCall.name, result: parsedResult });
-            toolResponses.push({
-              toolCallId: toolCall.id ?? '',
-              content: result,
-            });
+          for (const toolCall of aiResponse.tool_calls) {
+            const tool = tools.find((t) => t.name === toolCall.name);
+            if (tool) {
+              this.logger.debug(
+                `Executing tool: ${toolCall.name} with args: ${JSON.stringify(toolCall.args)}`,
+              );
+              const result = await (
+                tool as { invoke: (args: unknown) => Promise<string> }
+              ).invoke(toolCall.args);
+              const parsedResult = JSON.parse(result);
+              toolResults.push({ tool: toolCall.name, result: parsedResult });
+              toolResponses.push({
+                toolCallId: toolCall.id ?? '',
+                content: result,
+              });
+            }
           }
-        }
 
-        // Second call with tool results
-        messages.push(initialResponse);
-        for (const toolResponse of toolResponses) {
-          messages.push(
-            new ToolMessage({
-              tool_call_id: toolResponse.toolCallId,
-              content: toolResponse.content,
-            }),
-          );
+          // Add AI response and tool results to messages for next iteration
+          currentMessages.push(aiResponse);
+          for (const toolResponse of toolResponses) {
+            currentMessages.push(
+              new ToolMessage({
+                tool_call_id: toolResponse.toolCallId,
+                content: toolResponse.content,
+              }),
+            );
+          }
+        } else {
+          // No more tool calls, extract final response
+          response =
+            typeof aiResponse.content === 'string'
+              ? aiResponse.content
+              : JSON.stringify(aiResponse.content);
+          continueLoop = false;
         }
-
-        const finalResponse = await this.model.invoke(messages);
-        response =
-          typeof finalResponse.content === 'string'
-            ? finalResponse.content
-            : JSON.stringify(finalResponse.content);
-      } else {
-        response =
-          typeof initialResponse.content === 'string'
-            ? initialResponse.content
-            : JSON.stringify(initialResponse.content);
       }
 
       // Save to history

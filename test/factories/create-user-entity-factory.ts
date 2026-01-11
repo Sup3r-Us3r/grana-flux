@@ -45,14 +45,14 @@ export function createUserEntityFactory(input?: CreateUserEntityInput): User {
     complement: defaultInput.complement,
   });
 
-  return new User(
-    defaultInput.name,
-    new EmailVO(defaultInput.email),
-    defaultInput.password,
-    new CpfVO(defaultInput.cpf),
+  return new User({
+    id: input?.id,
+    name: defaultInput.name,
+    email: new EmailVO(defaultInput.email),
+    password: defaultInput.password,
+    cpf: new CpfVO(defaultInput.cpf),
     address,
-    input?.id,
-    input?.createdAt,
-    input?.updatedAt,
-  );
+    createdAt: input?.createdAt,
+    updatedAt: input?.updatedAt,
+  });
 }

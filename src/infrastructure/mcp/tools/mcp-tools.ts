@@ -1,5 +1,7 @@
+import { CreateCategoryUseCase } from '@application/use-cases/expenses/create-category/create-category-use-case';
 import { CreateExpenseUseCase } from '@application/use-cases/expenses/create-expense/create-expense-use-case';
 import { GetExpenseSummaryUseCase } from '@application/use-cases/expenses/get-expense-summary/get-expense-summary-use-case';
+import { ListCategoriesUseCase } from '@application/use-cases/expenses/list-categories/list-categories-use-case';
 import { ListExpensesUseCase } from '@application/use-cases/expenses/list-expenses/list-expenses-use-case';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
@@ -9,11 +11,63 @@ export function createMcpTools(
   createExpenseUseCase: CreateExpenseUseCase,
   listExpensesUseCase: ListExpensesUseCase,
   getExpenseSummaryUseCase: GetExpenseSummaryUseCase,
+  createCategoryUseCase: CreateCategoryUseCase,
+  listCategoriesUseCase: ListCategoriesUseCase,
 ) {
+  const listCategoriesTool = new DynamicStructuredTool({
+    name: 'list_categories',
+    description:
+      'List all available expense categories. Use this BEFORE creating an expense to get the correct categoryId. Returns category IDs and names.',
+    schema: z.object({}),
+    func: async () => {
+      const result = await listCategoriesUseCase.execute();
+
+      return JSON.stringify({
+        success: true,
+        categories: result.categories.map((c) => ({
+          id: c.id,
+          name: c.name,
+          color: c.color,
+        })),
+        total: result.total,
+      });
+    },
+  });
+
+  const createCategoryTool = new DynamicStructuredTool({
+    name: 'create_category',
+    description:
+      'Create a new expense category. Use when the needed category does not exist in list_categories results.',
+    schema: z.object({
+      name: z
+        .string()
+        .describe(
+          'Name of the category (e.g., Alimentação, Transporte, Moradia)',
+        ),
+      color: z
+        .string()
+        .optional()
+        .describe('Hex color code for the category (e.g., #6366f1), optional'),
+    }),
+    func: async ({ name, color }) => {
+      const result = await createCategoryUseCase.execute({ name, color });
+
+      return JSON.stringify({
+        success: true,
+        message: `Categoria "${result.name}" criada com sucesso!`,
+        category: {
+          id: result.id,
+          name: result.name,
+          color: result.color,
+        },
+      });
+    },
+  });
+
   const createExpenseTool = new DynamicStructuredTool({
     name: 'create_expense',
     description:
-      'Register a new personal expense. Use when user wants to add, register, or record a new expense or spending.',
+      'Register a new personal expense. IMPORTANT: Before calling this, you MUST call list_categories to get the categoryId. If the category does not exist, call create_category first.',
     schema: z.object({
       description: z.string().describe('Description of the expense'),
       amount: z
@@ -21,10 +75,10 @@ export function createMcpTools(
         .describe(
           'Amount in BRL (Brazilian Reais). Must be a positive number.',
         ),
-      category: z
+      categoryId: z
         .string()
         .describe(
-          'Category of the expense (e.g., Alimentação, Transporte, Moradia, Saúde, Lazer, Educação, Compras, Outros)',
+          'ID (UUID) of the category. Get this from list_categories or create_category.',
         ),
       date: z
         .string()
@@ -33,12 +87,12 @@ export function createMcpTools(
           'Date of expense in ISO format (YYYY-MM-DD), defaults to today if not specified',
         ),
     }),
-    func: async ({ description, amount, category, date }) => {
+    func: async ({ description, amount, categoryId, date }) => {
       const result = await createExpenseUseCase.execute({
         userId,
         description,
         amount,
-        category,
+        categoryId,
         date,
       });
 
@@ -49,7 +103,7 @@ export function createMcpTools(
           id: result.id,
           description: result.description,
           amount: result.amountFormatted,
-          category: result.category,
+          category: result.categoryName,
           date: result.date.toLocaleDateString('pt-BR'),
         },
       });
@@ -140,5 +194,11 @@ export function createMcpTools(
     },
   });
 
-  return [createExpenseTool, listExpensesTool, expenseSummaryTool];
+  return [
+    listCategoriesTool,
+    createCategoryTool,
+    createExpenseTool,
+    listExpensesTool,
+    expenseSummaryTool,
+  ];
 }
