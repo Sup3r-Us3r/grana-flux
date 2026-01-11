@@ -24,7 +24,10 @@ export class CreateExpenseUseCase {
       throw new NotFoundException('User not found');
     }
 
-    const category = await this.categoryRepository.findOrCreate(input.category);
+    const category = await this.categoryRepository.findById(input.categoryId);
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
 
     const amount = new MoneyVO(input.amount);
     const date = input.date ? new Date(input.date) : new Date();
@@ -44,7 +47,8 @@ export class CreateExpenseUseCase {
       description: expense.description,
       amount: expense.amount.value,
       amountFormatted: expense.amount.formatted,
-      category: category.name,
+      categoryId: category.id,
+      categoryName: category.name,
       date: expense.date,
       createdAt: expense.createdAt,
     };

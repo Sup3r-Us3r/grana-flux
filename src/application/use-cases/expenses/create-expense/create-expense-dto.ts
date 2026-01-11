@@ -2,7 +2,7 @@ export interface CreateExpenseInputDTO {
   userId: string;
   description: string;
   amount: number;
-  category: string;
+  categoryId: string;
   date?: string;
 }
 
@@ -11,7 +11,8 @@ export interface CreateExpenseOutputDTO {
   description: string;
   amount: number;
   amountFormatted: string;
-  category: string;
+  categoryId: string;
+  categoryName: string;
   date: Date;
   createdAt: Date;
 }
