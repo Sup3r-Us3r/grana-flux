@@ -13,7 +13,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
 
   const config = new DocumentBuilder()
-    .setTitle('POC API')
+    .setTitle('Grana Flux API')
     .setDescription('API documentation')
     .setVersion('1.0')
     .build();

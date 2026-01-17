@@ -15,13 +15,23 @@ import { PrismaUserRepository } from '@infra/database/repositories/prisma-user-r
 import { McpAgentService } from '@infra/mcp/mcp-agent-service';
 import { LangchainMessageHistoryProvider } from '@infra/providers/langchain-message-history-provider';
 import { RedisCacheProvider } from '@infra/providers/redis-cache-provider';
+import { TelegramMessageHandler } from '@infra/telegram/telegram-message-handler';
+import { TelegramService } from '@infra/telegram/telegram-service';
+import { HttpModule } from '@nestjs/axios';
 import { forwardRef, Module } from '@nestjs/common';
 import { McpController } from '../http/controllers/mcp-controller';
+import { TelegramWebhookController } from '../http/controllers/telegram-webhook-controller';
 import { AppModule } from './app-module';
 
 @Module({
-  imports: [forwardRef(() => AppModule)],
-  controllers: [McpController],
+  imports: [
+    forwardRef(() => AppModule),
+    HttpModule.register({
+      timeout: 30000, // 30 seconds
+      maxRedirects: 5,
+    }),
+  ],
+  controllers: [McpController, TelegramWebhookController],
   providers: [
     PrismaService,
     // Use Cases
@@ -34,6 +44,9 @@ import { AppModule } from './app-module';
     McpAgentService,
     RedisCacheProvider,
     LangchainMessageHistoryProvider,
+    // Telegram
+    TelegramService,
+    TelegramMessageHandler,
     // Repository Mappings
     {
       provide: ExpenseRepository,
