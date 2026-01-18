@@ -21,6 +21,18 @@ CREATE TABLE "expenses" (
     CONSTRAINT "expenses_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "users" (
+    "id" TEXT NOT NULL,
+    "telegram_user_id" BIGINT NOT NULL,
+    "name" VARCHAR(255) NOT NULL,
+    "username" VARCHAR(255),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "categories_name_key" ON "categories"("name");
 
@@ -32,6 +44,9 @@ CREATE INDEX "expenses_user_id_date_idx" ON "expenses"("user_id", "date");
 
 -- CreateIndex
 CREATE INDEX "expenses_category_id_idx" ON "expenses"("category_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_telegram_user_id_key" ON "users"("telegram_user_id");
 
 -- AddForeignKey
 ALTER TABLE "expenses" ADD CONSTRAINT "expenses_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

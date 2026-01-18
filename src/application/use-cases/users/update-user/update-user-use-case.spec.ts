@@ -37,32 +37,10 @@ describe('UpdateUserUseCase', () => {
 
     expect(result.id).toBe(user.id);
     expect(result.name).toBe('Jane Doe');
+    expect(result.telegramUserId).toBe(user.telegramUserId);
 
     const updatedUser = await userRepository.findById(user.id);
     expect(updatedUser?.name).toBe('Jane Doe');
-  });
-
-  it('should be able to update a user address', async () => {
-    const user = createUserEntityFactory();
-    await userRepository.create(user);
-
-    const result = await sut.execute({
-      id: user.id,
-      street: 'New Street',
-      number: '456',
-      city: 'New City',
-      state: 'NC',
-      zipCode: '99999',
-    });
-
-    expect(result.id).toBe(user.id);
-
-    const updatedUser = await userRepository.findById(user.id);
-    expect(updatedUser?.address.street).toBe('New Street');
-    expect(updatedUser?.address.number).toBe('456');
-    expect(updatedUser?.address.city).toBe('New City');
-    expect(updatedUser?.address.state).toBe('NC');
-    expect(updatedUser?.address.zipCode).toBe('99999');
   });
 
   it('should throw error if user does not exist', async () => {

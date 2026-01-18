@@ -1,8 +1,5 @@
-import { CpfVO } from '@domain/shared/value-objects/cpf-vo';
-import { EmailVO } from '@domain/shared/value-objects/email-vo';
 import { User } from '@domain/users/entities/user-entity';
 import { UserRepository } from '@domain/users/repositories/user-repository';
-import { AddressVO } from '@domain/users/value-objects/address-vo';
 import { Injectable } from '@nestjs/common';
 import { PaginationType } from '@shared/types/pagination-type';
 import { User as PrismaUser } from '../prisma/generated/client';
@@ -24,8 +21,10 @@ export class PrismaUserRepository implements UserRepository {
     return this.toDomain(prismaUser);
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    const prismaUser = await this.prisma.user.findUnique({ where: { email } });
+  async findByTelegramUserId(telegramUserId: number): Promise<User | null> {
+    const prismaUser = await this.prisma.user.findUnique({
+      where: { telegramUserId: BigInt(telegramUserId) },
+    });
 
     if (!prismaUser) {
       return null;
@@ -68,38 +67,23 @@ export class PrismaUserRepository implements UserRepository {
   private toDomain(prismaUser: PrismaUser): User {
     return new User({
       id: prismaUser.id,
+      telegramUserId: Number(prismaUser.telegramUserId),
       name: prismaUser.name,
-      email: new EmailVO(prismaUser.email),
-      password: prismaUser.password,
-      cpf: new CpfVO(prismaUser.cpf),
-      address: new AddressVO({
-        street: prismaUser.street,
-        number: prismaUser.number,
-        city: prismaUser.city,
-        state: prismaUser.state,
-        zipCode: prismaUser.zipCode,
-        complement: prismaUser.complement ?? undefined,
-      }),
+      username: prismaUser.username,
       createdAt: prismaUser.createdAt,
       updatedAt: prismaUser.updatedAt,
     });
   }
 
-  private toPrisma(user: User): PrismaUser {
+  private toPrisma(user: User): Omit<PrismaUser, 'createdAt' | 'updatedAt'> & {
+    createdAt?: Date;
+    updatedAt?: Date;
+  } {
     return {
       id: user.id,
+      telegramUserId: BigInt(user.telegramUserId),
       name: user.name,
-      email: user.email.value,
-      password: user.password,
-      cpf: user.cpf.value,
-      street: user.address.street,
-      number: user.address.number,
-      city: user.address.city,
-      state: user.address.state,
-      zipCode: user.address.zipCode,
-      complement: user.address.complement ?? null,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      username: user.username,
     };
   }
 }

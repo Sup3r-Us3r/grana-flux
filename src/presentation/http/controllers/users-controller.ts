@@ -11,18 +11,23 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Post,
   Put,
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { InternalServerErrorException } from '@shared/exceptions/internal-server-error-exception';
+import { NotFoundException } from '@shared/exceptions/not-found-exception';
 import { ValidationException } from '@shared/exceptions/validation-exception';
 import {
   CreateUserRequestDTO,
   CreateUserResponseDTO,
 } from '../dtos/users/create-user-dto';
+import { GetUserByIdResponseDTO } from '../dtos/users/get-user-by-id-dto';
+import {
+  ListUsersRequestDTO,
+  ListUsersResponseDTO,
+} from '../dtos/users/list-users-dto';
 import {
   UpdateUserRequestDTO,
   UpdateUserResponseDTO,
@@ -56,7 +61,10 @@ export class UsersController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get user by ID' })
-  async getById(@Param('id') id: string) {
+  @ApiResponse({ status: 200, type: GetUserByIdResponseDTO })
+  @ApiResponse({ status: 404, type: NotFoundException })
+  @ApiResponse({ status: 500, type: InternalServerErrorException })
+  async getById(@Param('id') id: string): Promise<GetUserByIdResponseDTO> {
     return this.getUserByIdUseCase.execute({ id });
   }
 
@@ -80,11 +88,16 @@ export class UsersController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'List users' })
+  @ApiOperation({ summary: 'List users with pagination' })
+  @ApiResponse({ status: 200, type: ListUsersResponseDTO })
+  @ApiResponse({ status: 400, type: ValidationException })
+  @ApiResponse({ status: 500, type: InternalServerErrorException })
   async list(
-    @Query('page', ParseIntPipe) page: number,
-    @Query('limit', ParseIntPipe) limit: number,
-  ) {
-    return this.listUsersUseCase.execute({ page, limit });
+    @Query() query: ListUsersRequestDTO,
+  ): Promise<ListUsersResponseDTO> {
+    return this.listUsersUseCase.execute({
+      page: query.page,
+      limit: query.limit,
+    });
   }
 }

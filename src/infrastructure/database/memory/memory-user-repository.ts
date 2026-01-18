@@ -16,8 +16,8 @@ export class MemoryUserRepository implements UserRepository {
     return user || null;
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    const user = this.users.find((u) => u.email.value === email);
+  async findByTelegramUserId(telegramUserId: number): Promise<User | null> {
+    const user = this.users.find((u) => u.telegramUserId === telegramUserId);
     return user || null;
   }
 

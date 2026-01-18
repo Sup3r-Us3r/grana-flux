@@ -1,17 +1,10 @@
 model User {
-  id         String   @id @default(uuid())
-  name       String   @db.VarChar(255)
-  email      String   @unique @db.VarChar(255)
-  password   String   @db.VarChar(255)
-  cpf        String   @unique @db.VarChar(11)
-  street     String   @db.VarChar(255)
-  number     String   @db.VarChar(255)
-  city       String   @db.VarChar(255)
-  state      String   @db.VarChar(255)
-  zipCode    String   @map("zip_code") @db.VarChar(8)
-  complement String?  @db.VarChar(255)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id             String   @id @default(uuid())
+  telegramUserId BigInt   @unique @map("telegram_user_id")
+  name           String   @db.VarChar(255)
+  username       String?  @db.VarChar(255)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   expenses Expense[]
 

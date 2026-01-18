@@ -36,7 +36,7 @@ describe('ListUsersUseCase', () => {
     expect(result.data.items).toHaveLength(2);
     expect(result.data.items[0].id).toBe(user1.id);
     expect(result.data.items[0].name).toBe(user1.name);
-    expect(result.data.items[0].email).toBe(user1.email.value);
+    expect(result.data.items[0].telegramUserId).toBe(user1.telegramUserId);
     expect(result.data.items[1].id).toBe(user2.id);
     expect(result.data.items[1].name).toBe(user2.name);
     expect(result.data.total).toBe(2);

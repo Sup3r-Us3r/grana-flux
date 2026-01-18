@@ -4,17 +4,9 @@ export interface GetUserByIdUseCaseInputDTO {
 
 export interface GetUserByIdUseCaseOutputDTO {
   id: string;
+  telegramUserId: number;
   name: string;
-  email: string;
-  cpf: string;
+  username: string | null;
   createdAt: Date;
   updatedAt: Date;
-  address: {
-    street: string;
-    number: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    complement?: string;
-  };
 }

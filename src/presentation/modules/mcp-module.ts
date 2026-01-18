@@ -3,6 +3,8 @@ import { CreateExpenseUseCase } from '@application/use-cases/expenses/create-exp
 import { GetExpenseSummaryUseCase } from '@application/use-cases/expenses/get-expense-summary/get-expense-summary-use-case';
 import { ListCategoriesUseCase } from '@application/use-cases/expenses/list-categories/list-categories-use-case';
 import { ListExpensesUseCase } from '@application/use-cases/expenses/list-expenses/list-expenses-use-case';
+import { CreateUserUseCase } from '@application/use-cases/users/create-user/create-user-use-case';
+import { GetUserByTelegramIdUseCase } from '@application/use-cases/users/get-user-by-telegram-id/get-user-by-telegram-id-use-case';
 import { CategoryRepository } from '@domain/expenses/repositories/category-repository';
 import { ExpenseRepository } from '@domain/expenses/repositories/expense-repository';
 import { CacheProvider } from '@domain/providers/cache-provider';
@@ -40,6 +42,9 @@ import { AppModule } from './app-module';
     GetExpenseSummaryUseCase,
     CreateCategoryUseCase,
     ListCategoriesUseCase,
+    // User Use Cases
+    CreateUserUseCase,
+    GetUserByTelegramIdUseCase,
     // MCP
     McpAgentService,
     RedisCacheProvider,

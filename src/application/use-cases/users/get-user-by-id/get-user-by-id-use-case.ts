@@ -21,17 +21,9 @@ export class GetUserByIdUseCase {
 
     return {
       id: user.id,
+      telegramUserId: user.telegramUserId,
       name: user.name,
-      email: user.email.value,
-      cpf: user.cpf.formatted,
-      address: {
-        street: user.address.street,
-        number: user.address.number,
-        city: user.address.city,
-        state: user.address.state,
-        zipCode: user.address.zipCode,
-        complement: user.address.complement,
-      },
+      username: user.username,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

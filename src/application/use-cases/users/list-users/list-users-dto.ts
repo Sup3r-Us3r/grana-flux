@@ -8,8 +8,9 @@ export interface ListUsersUseCaseInputDTO {
 export interface ListUsersUseCaseOutputDTO {
   data: PaginationType<{
     id: string;
+    telegramUserId: number;
     name: string;
-    email: string;
+    username: string | null;
     createdAt: Date;
   }>;
 }

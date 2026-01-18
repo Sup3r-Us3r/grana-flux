@@ -29,7 +29,8 @@ describe('GetUserByIdUseCase', () => {
   it('should be able to get a user by id', async () => {
     const user = createUserEntityFactory({
       name: 'John Doe',
-      email: 'john.doe@example.com',
+      telegramUserId: 123456789,
+      username: 'johndoe',
     });
     await userRepository.create(user);
 
@@ -37,17 +38,9 @@ describe('GetUserByIdUseCase', () => {
 
     expect(result).toEqual({
       id: user.id,
+      telegramUserId: user.telegramUserId,
       name: user.name,
-      email: user.email.value,
-      cpf: user.cpf.formatted,
-      address: {
-        street: user.address.street,
-        number: user.address.number,
-        city: user.address.city,
-        state: user.address.state,
-        zipCode: user.address.zipCode,
-        complement: user.address.complement,
-      },
+      username: user.username,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });

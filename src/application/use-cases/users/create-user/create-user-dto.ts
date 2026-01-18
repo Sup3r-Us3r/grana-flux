@@ -1,19 +1,13 @@
 export interface CreateUserUseCaseInputDTO {
+  telegramUserId: number;
   name: string;
-  email: string;
-  password: string;
-  cpf: string;
-  street: string;
-  number: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  complement?: string;
+  username?: string;
 }
 
 export interface CreateUserUseCaseOutputDTO {
   id: string;
+  telegramUserId: number;
   name: string;
-  email: string;
+  username: string | null;
   createdAt: Date;
 }

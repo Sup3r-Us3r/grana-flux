@@ -12,8 +12,8 @@ export class ListUsersUseCase {
   async execute(
     input: ListUsersUseCaseInputDTO,
   ): Promise<ListUsersUseCaseOutputDTO> {
-    const page = input.page || 1;
-    const limit = input.limit || 10;
+    const page = Number(input.page) || 1;
+    const limit = Number(input.limit) || 10;
     const result = await this.userRepository.findAll(page, limit);
 
     return {
@@ -21,8 +21,9 @@ export class ListUsersUseCase {
         ...result,
         items: result.items.map((user) => ({
           id: user.id,
+          telegramUserId: user.telegramUserId,
           name: user.name,
-          email: user.email.value,
+          username: user.username,
           createdAt: user.createdAt,
         })),
       },

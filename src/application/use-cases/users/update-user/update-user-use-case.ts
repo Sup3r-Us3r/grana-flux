@@ -1,5 +1,4 @@
 import { UserRepository } from '@domain/users/repositories/user-repository';
-import { AddressVO } from '@domain/users/value-objects/address-vo';
 import { Injectable } from '@nestjs/common';
 import { NotFoundException } from '@shared/exceptions/not-found-exception';
 import {
@@ -20,32 +19,14 @@ export class UpdateUserUseCase {
       throw new NotFoundException('User not found');
     }
 
-    let newAddress = user.address;
-    if (
-      input?.street ||
-      input?.number ||
-      input?.city ||
-      input?.state ||
-      input?.zipCode ||
-      input?.complement
-    ) {
-      newAddress = new AddressVO({
-        street: input?.street ?? user.address.street,
-        number: input?.number ?? user.address.number,
-        city: input?.city ?? user.address.city,
-        state: input?.state ?? user.address.state,
-        zipCode: input?.zipCode ?? user.address.zipCode,
-        complement: input?.complement ?? user.address.complement,
-      });
-    }
-
-    user.update({ name: input.name, address: newAddress });
+    user.update({ name: input.name });
     await this.userRepository.update(user);
 
     return {
       id: user.id,
+      telegramUserId: user.telegramUserId,
       name: user.name,
-      email: user.email.value,
+      username: user.username,
       updatedAt: user.updatedAt,
     };
   }

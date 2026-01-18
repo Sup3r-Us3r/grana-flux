@@ -19,20 +19,41 @@ describe('UsersController (e2e)', () => {
 
   describe('POST /users', () => {
     it('should create a new user', async () => {
-      const userData = createUserFactory();
+      const userData = {
+        telegramUserId: faker.number.int({ min: 100000000, max: 999999999 }),
+        name: faker.person.fullName(),
+        username: faker.internet.username().toLowerCase(),
+      };
 
       const response = await ctx.request.post('/users').send(userData);
 
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty('id');
+      expect(response.body.telegramUserId).toBe(userData.telegramUserId);
       expect(response.body.name).toBe(userData.name);
-      expect(response.body.email).toBe(userData.email);
+      expect(response.body.username).toBe(userData.username);
+    });
+
+    it('should create a new user without username', async () => {
+      const userData = {
+        telegramUserId: faker.number.int({ min: 100000000, max: 999999999 }),
+        name: faker.person.fullName(),
+      };
+
+      const response = await ctx.request.post('/users').send(userData);
+
+      expect(response.status).toBe(201);
+      expect(response.body.username).toBeNull();
     });
   });
 
   describe('GET /users/:id', () => {
     it('should get a user by id', async () => {
-      const userData = createUserFactory();
+      const userData = {
+        telegramUserId: faker.number.int({ min: 100000000, max: 999999999 }),
+        name: faker.person.fullName(),
+        username: faker.internet.username().toLowerCase(),
+      };
       const createResponse = await ctx.request.post('/users').send(userData);
       const userId = createResponse.body.id;
 
@@ -41,6 +62,10 @@ describe('UsersController (e2e)', () => {
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('id', userId);
       expect(response.body).toHaveProperty('name', userData.name);
+      expect(response.body).toHaveProperty(
+        'telegramUserId',
+        userData.telegramUserId,
+      );
     });
 
     it('should return 404 for non-existent user', async () => {
@@ -54,7 +79,10 @@ describe('UsersController (e2e)', () => {
 
   describe('PUT /users/:id', () => {
     it('should update a user', async () => {
-      const userData = createUserFactory();
+      const userData = {
+        telegramUserId: faker.number.int({ min: 100000000, max: 999999999 }),
+        name: faker.person.fullName(),
+      };
       const createResponse = await ctx.request.post('/users').send(userData);
       const userId = createResponse.body.id;
 
@@ -82,7 +110,10 @@ describe('UsersController (e2e)', () => {
     it('should list users with pagination', async () => {
       // Cria 3 usuários
       for (let i = 0; i < 3; i++) {
-        await ctx.request.post('/users').send(createUserFactory());
+        await ctx.request.post('/users').send({
+          telegramUserId: faker.number.int({ min: 100000000, max: 999999999 }),
+          name: faker.person.fullName(),
+        });
       }
 
       const response = await ctx.request.get('/users?page=1&limit=10');
@@ -108,7 +139,10 @@ describe('UsersController (e2e)', () => {
 
   describe('DELETE /users/:id', () => {
     it('should delete a user', async () => {
-      const userData = createUserFactory();
+      const userData = {
+        telegramUserId: faker.number.int({ min: 100000000, max: 999999999 }),
+        name: faker.person.fullName(),
+      };
       const createResponse = await ctx.request.post('/users').send(userData);
       const userId = createResponse.body.id;
 
